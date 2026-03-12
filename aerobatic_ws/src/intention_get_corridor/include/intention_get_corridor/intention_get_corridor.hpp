@@ -35,31 +35,31 @@ class GlobalPlanner
 private:
     Config config;
 
-    ros::NodeHandle nh;
+    ros::NodeHandle nh;			//发布者和接受者取决于启动模式，通过Rviz接受地图数据还是输入PCD点云文件
     ros::Subscriber targetSub;
     ros::Subscriber odomSub;
     ros::Subscriber mapSub;
     ros::Subscriber boundSub;
     ros::Subscriber intentionSub;
     ros::Publisher intentionPub;
-    ros::Publisher keyPosPub;
+    ros::Publisher keyPosPub;	//关键路径点？下来看看
     ros::Publisher targetPub;
     ros::Publisher mapPub, visMapPub;
     ros::Publisher corridorPub;
 
     bool mapInitialized, odomInitialized;
     std::shared_ptr<GlobalMap> glbMapPtr;
-    Visualizer visualizer;
-    astar_ros astarfinder;
-    Eigen::Vector3d bound_min, bound_max;
+    Visualizer visualizer;		//可视化工具，用于Rviz发布，后面细看
+    astar_ros astarfinder;		//考虑写一个D*，哈哈动态地图
+    Eigen::Vector3d bound_min, bound_max;	//这里边界用两个点围成的立方体表示边界（什么的边界？规划的边界?）
 
-    std::vector<Eigen::Matrix<double, 6, -1>> onetimeCorridor, partCorridor;
-    geometry_msgs::PoseStamped last_target, lastmsg;
-    Eigen::Matrix<double, 6, -1> lastPolytope{6, 0};
+    std::vector<Eigen::Matrix<double, 6, -1>> onetimeCorridor, partCorridor;	//安全走廊序列，要结合论文细看，由超平面定义
+    geometry_msgs::PoseStamped last_target, lastmsg;	//ROS消息类型，包含时间戳Stamped、坐标信息Frame与位姿Pose，最后的目标点
+    Eigen::Matrix<double, 6, -1> lastPolytope{6, 0}; 	//最后一个安全走廊
     bool getFirstTarget = false;
     int confirm = 0;
 
-    nav_msgs::Odometry odom;
+    nav_msgs::Odometry odom;    //里程计消息对象
 
 public:
     GlobalPlanner(Config &conf, ros::NodeHandle &nh_)
@@ -125,7 +125,7 @@ public:
         }
     }
 
-    inline void BoundCallback(const nav_msgs::Odometry::ConstPtr &msg)
+    inline void BoundCallback(const nav_msgs::Odometry::ConstPtr &msg)  //要看看论文的
     {
         if (!config.useLoadPCDFile)
         {
@@ -141,14 +141,14 @@ public:
         }
     }
 
-    inline void MapCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)
+    inline void MapCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)  //原始地图处理
     {
         if (config.useLoadPCDFile)
             return;
 
         pcl::PointCloud<pcl::PointXYZ> cloudDense;
         ROS_INFO("Initializing map from callback!");
-        pcl::fromROSMsg(*msg, cloudDense);
+        pcl::fromROSMsg(*msg, cloudDense);  //转换为PCL点云格式
         glbMapPtr->initialize(cloudDense, config.outlierThreshold, bound_min, bound_max);
         pubMap(cloudDense);
         mapInitialized = true;
@@ -164,7 +164,7 @@ public:
         pcl::PointCloud<pcl::PointXYZ> infcloud;
 
         pcl::toROSMsg(cloudDense, cloudVisMsg);
-        glbMapPtr->getPointCloud(infcloud, config.expectedHeight[1]);
+        glbMapPtr->getPointCloud(infcloud, config.expectedHeight[1]);   //地图过滤，处理函数是基于PCL格式的，所以这里用中间数据处理，后面再转回去
 
         pcl::toROSMsg(infcloud, cloudMsg);
 
@@ -173,8 +173,8 @@ public:
         ros::Rate sleep_rate(1 / sleep_time);
         sleep_rate.sleep();
         std::cout << "count = " << cloudDense.size() << " | " << infcloud.size() << std::endl;
-        mapPub.publish(cloudMsg);
-        visMapPub.publish(cloudVisMsg);
+        mapPub.publish(cloudMsg);   //规划使用
+        visMapPub.publish(cloudVisMsg);     //可视化使用
 
         ROS_WARN("Map has been published!");
     }
@@ -272,7 +272,7 @@ public:
         return true;
     }
 
-    inline void IntentionCallback(const quadrotor_msgs::PointSeq::ConstPtr &msg)
+    inline void IntentionCallback(const quadrotor_msgs::PointSeq::ConstPtr &msg) //aerobatic_ws/src/uav_simulator/Utils/quadrotor_msgs
     {
         if (!odomInitialized)
         {
@@ -285,12 +285,12 @@ public:
             return;
         }
 
-        int cnt_pos = int(msg->length);
+        int cnt_pos = int(msg->length); //记录意图点数量 
         double isPosConstrain = 0.0;
-        Eigen::Matrix3Xd key_pos;
-        geometry_msgs::Pose onepos;
-        geometry_msgs::PoseArray keyPosArray;
-        Eigen::Vector3d zb;
+        Eigen::Matrix3Xd key_pos;   //3*X矩阵，每一列表示一个关键路径点的xyz坐标
+        geometry_msgs::Pose onepos; //中间变量用于整合压入keyPosArray，其中起始点姿态水平，注意orientation成员表示z轴方向向量
+        geometry_msgs::PoseArray keyPosArray;   //意图点序列，其中第一个起始点为onepos，把Unity消息点转换为统一消息序列再发布
+        Eigen::Vector3d zb;         //z_bodyFrame，z轴方向向量，指定姿态
         key_pos.resize(3, cnt_pos);
         key_pos.setZero();
         keyPosArray.poses.clear();
@@ -307,8 +307,8 @@ public:
         onepos.orientation.w = isPosConstrain;
         keyPosArray.poses.push_back(onepos);
 
-        for (int i = 1; i < cnt_pos; i++)
-        {
+        for (int i = 1; i < cnt_pos; i++)   //遍历意图点（不包含起始点），把Unity的坐标信息转换为ROS的坐标信息，其中Unity的位置消息为包含三维信息的一维数组
+        {                                   //同时获取key_pos和keyPosArray，前者用于数学运算，后者用于消息传递
             isPosConstrain = 0.0;
             // unity x y z means ros x z y
             key_pos(0, i) = msg->pos[i * 3 + 0];
@@ -319,7 +319,7 @@ public:
                 zb(0) = msg->vel[i * 3 + 0];
                 zb(1) = msg->vel[i * 3 + 2];
                 zb(2) = msg->vel[i * 3 + 1];
-                zb.normalize();
+                zb.normalize();             //归一化
                 if (msg->type[i] == 2)
                     isPosConstrain = 1.0;
             }
@@ -338,14 +338,15 @@ public:
             onepos.orientation.w = isPosConstrain;
             keyPosArray.poses.push_back(onepos);
         }
+
         std::cout << "key_pos = " << key_pos.transpose() << std::endl;
 
         geometry_msgs::PoseStamped goal;
         goal.header.frame_id = "world";
-        goal.header.stamp = ros::Time::now();
-        goal.pose = onepos;
+        goal.header.stamp = ros::Time::now();   //用于TF处理
+        goal.pose = onepos;     //msg序列的最后一个点
         targetPub.publish(goal);
-        getCorridorFromSetPos(keyPosArray, key_pos);
+        getCorridorFromSetPos(keyPosArray, key_pos);    //调用A*获取走廊
     }
 
     inline void loadPosAtt(Eigen::Matrix3Xd &keypos, geometry_msgs::PoseArray &keyPosArray, const Eigen::Vector3d target)
@@ -406,7 +407,7 @@ public:
         target(0) = msg->pose.position.x;
         target(1) = msg->pose.position.y;
         target(2) = msg->pose.position.z;
-        loadPosAtt(key_pos, keyPosArray, target);
+        loadPosAtt(key_pos, keyPosArray, target);   //加载Config的预设路径点
         quadrotor_msgs::PointSeq pointseq;
         pointseq.header.frame_id = "world";
         pointseq.header.seq = ++seq;
@@ -429,20 +430,20 @@ public:
             pointseq.acc[i * 3 + 2] = 0.0;
             pointseq.type[i] = keyPosArray.poses[i].orientation.w;
         }
-        intentionPub.publish(pointseq);
-        getCorridorFromSetPos(keyPosArray, key_pos);
+        intentionPub.publish(pointseq);     //发布意图，但是貌似只是用于监视而已，统一PointSeq消息类型
+        getCorridorFromSetPos(keyPosArray, key_pos);    //调用A*获取走廊
     }
 
-    void getCorridorFromSetPos(geometry_msgs::PoseArray &keyPosArray, const Eigen::Matrix3Xd &key_pos)
+    void getCorridorFromSetPos(geometry_msgs::PoseArray &keyPosArray, const Eigen::Matrix3Xd &key_pos)   //Most Important
     {
         double length;
-        onetimeCorridor.clear();
-        std::vector<Eigen::Vector3d> pathList;
+        onetimeCorridor.clear();    //生成前清空
+        std::vector<Eigen::Vector3d> pathList;  //A*规划得到的路径点序列
         Eigen::Vector3d start, goal;
         auto iter = keyPosArray.poses.begin();
         iter++;
         int count = key_pos.cols() - 1;
-        for (int i = 0; i < count; i++, iter++)
+        for (int i = 0; i < count; i++, iter++)     //每段关键点之间分别规划
         {
             start(0) = key_pos(0, i);
             start(1) = key_pos(1, i);
@@ -453,9 +454,9 @@ public:
             astarfinder.setstart(start);
             astarfinder.setgoal(goal);
             pathList.clear();
-            astarfinder.getpathlist(pathList);
+            astarfinder.getpathlist(pathList);      //启动规划
             length = pathList.size();
-            iter->orientation.x *= length;
+            iter->orientation.x *= length;          //将路径的长度信息编码到z轴方向向量中
             iter->orientation.y *= length;
             iter->orientation.z *= length;
             if (pathList.empty())
@@ -465,7 +466,7 @@ public:
                 return;
             }
             partCorridor.clear();
-            if (!corridorSeqGen(pathList, onetimeCorridor, partCorridor))
+            if (!corridorSeqGen(pathList, onetimeCorridor, partCorridor))       //安全走廊生成
             {
                 ROS_ERROR("Failed to generate corridor from start point.");
                 return;
@@ -484,17 +485,17 @@ public:
         visualizer.visualizePolytope(onetimeCorridor, 0, true);
     }
 
-    inline void pubCorridor(const std::vector<Eigen::Matrix<double, 6, -1>> &corridorSeq)
+    inline void pubCorridor(const std::vector<Eigen::Matrix<double, 6, -1>> &corridorSeq)   //corridorSeq即onetimeCorridor，超平面
     {
         static int list_cnt = 0;
-        quadrotor_msgs::CorridorList cor_list;
+        quadrotor_msgs::CorridorList cor_list;  //aerobatic_ws/src/uav_simulator/Utils/quadrotor_msgs
 
         cor_list.corridor_type = quadrotor_msgs::CorridorList::CORRIDOR_TYPE_H;
         cor_list.corridor_cnt = corridorSeq.size();
         int cor_cnt = 0;
         for (auto iter = corridorSeq.begin(); iter != corridorSeq.end(); iter++)
         {
-            quadrotor_msgs::Corridor cor;
+            quadrotor_msgs::Corridor cor;           
             cor.corridor_type = quadrotor_msgs::Corridor::CORRIDOR_TYPE_H;
             cor.cnt = cor_cnt++;
             cor.size = iter->cols();

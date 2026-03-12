@@ -1,0 +1,14 @@
+<launch>
+
+	<arg name="odom" default="/visual_slam/odom" />
+
+	<node pkg="px4ctrl" type="px4ctrl_node" name="px4ctrl" output="screen">
+
+		<remap from="~odom" to="$(arg odom)" />
+
+		<remap from="~cmd" to="/position_cmd" />
+
+        <rosparam command="load" file="$(find px4ctrl)/config/ctrl_param_fpv.yaml" />
+	</node>
+ 
+</launch>

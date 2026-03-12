@@ -3,6 +3,7 @@
 	<node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find intention_get_corridor)/config/indoor_rviz.rviz">
 	</node>
 
+	<!-- 室内意图获取，载入indoor config -->
 	<node pkg="intention_get_corridor" type="intention_get_corridor_node" name="intention_get_corridor" output="screen">
 		<param name="RunInConsole" type="bool" value="0" />
 		<rosparam file="$(find intention_get_corridor)/config/indoor_params.yaml" command="load" />

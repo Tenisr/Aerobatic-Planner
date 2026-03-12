@@ -388,7 +388,7 @@ public:
             // call the optimization considering collision avoidance with the other trajectory in gts with stamps in ginits
             int optFailedCount = 0;
             printf("\nOptimizing trajectory, please wait ...\n");
-            while (gcopter.optimize(traj, config.relCostTol) < 0 && ros::ok() && optFailedCount < 10)
+            while (gcopter.optimize(traj, config.relCostTol) < 0 && ros::ok() && optFailedCount < 100) //原来只有10次
             {   // reset again and optimize again until success
                 optFailedCount += 1;
                 printf("Planning attempts is %d.\n\n", optFailedCount);
@@ -400,7 +400,7 @@ public:
                                config.isOpt_settime, visualizer, optDebugPub);
             }
 
-            if (optFailedCount == 10){
+            if (optFailedCount == 100){
                 printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
                 printf("          Unable to find a reasonable trajectory!\n");
                 printf("  Please change intentions or constraints then try again!\n");

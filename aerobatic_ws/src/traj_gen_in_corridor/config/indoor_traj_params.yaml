@@ -5,19 +5,45 @@ OdomTopic: "/visual_slam/odom"
 
 TrajTopic: "/trajectory_generator_node/trajectory"
 VisTrajTopic: "/trajectory_generator_node/forvis_trajectory"
-MaxOmgRate: 7
-MaxVelRate: 7.0
-MaxTau: 20.0
-MinTau: 7.0
-MaxRange: 0.5
+MaxOmgRate: 7.0   #最大角速度
+MaxVelRate: 10.0   #最大线速度
+MaxTau: 20.0      #最大推力
+MinTau: 7.0       #最小推力
+MaxRange: 0.5     #最大容差范围
 
-WeightT: 2.0e+4
+WeightT: 2.0e+4   #时间惩罚权重，值越大飞行时间越短
 
-ChiVec: [1.0e+6, 1.0e+4, 1.0e+4, 1.0e+4, 1.0e+7, 1.0e+7, 1.0]
-SmoothingEps: 1.0e-2
-RelCostTol: 1.0e-7
-QuadratureResolution: 5
-FlipResolution: 40
-deltaT: 0.1
+ChiVec: [1.0e+6, 1.0e+4, 1.0e+4, 1.0e+4, 1.0e+7, 1.0e+7, 1.0]   #物理约束惩罚
+SmoothingEps: 1.0e-2    #平滑惩罚
+RelCostTol: 1.0e-7      #停止条件
+QuadratureResolution: 5   #积分求解分辨率
+FlipResolution: 40        #碰撞采样
+deltaT: 0.1               #离散时间
 debug: true
-opt_settime: true
+opt_settime: true         #时间最优求解
+
+
+# ----------- 原参数 ----------- 
+
+# TargetTopic: "/goal"
+# TriggerTopic: "/trigger"
+# OdomTopic: "/visual_slam/odom"
+
+# TrajTopic: "/trajectory_generator_node/trajectory"
+# VisTrajTopic: "/trajectory_generator_node/forvis_trajectory"
+# MaxOmgRate: 7
+# MaxVelRate: 7.0
+# MaxTau: 20.0
+# MinTau: 7.0
+# MaxRange: 0.5
+
+# WeightT: 2.0e+4
+
+# ChiVec: [1.0e+6, 1.0e+4, 1.0e+4, 1.0e+4, 1.0e+7, 1.0e+7, 1.0]
+# SmoothingEps: 1.0e-2
+# RelCostTol: 1.0e-7
+# QuadratureResolution: 5
+# FlipResolution: 40
+# deltaT: 0.1
+# debug: true
+# opt_settime: true

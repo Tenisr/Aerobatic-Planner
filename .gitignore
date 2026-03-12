@@ -1,0 +1,9 @@
+aerobatic-planner.md
+aerobatic-planner.assets/
+aerobatic_ws/devel/
+aerobatic_ws/build/
+aerobatic_ws/log/
+aerobatic_ws/record/
+aerobatic_ws/.vscode/
+aerobatic_ws/.catkin_workspace
+Unity/

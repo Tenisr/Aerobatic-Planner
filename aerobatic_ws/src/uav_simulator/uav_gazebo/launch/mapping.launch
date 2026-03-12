@@ -1,0 +1,16 @@
+<launch>
+
+    <include file="$(find px4)/launch/posix_sitl.launch">
+
+        <arg name="world" value="$(find uav_gazebo)/world/uav_simulation.world" />
+        <arg name="sdf" value="$(find uav_gazebo)/model/iris_3d_lidar_360/iris_3d_lidar_360.sdf"/>
+    </include>
+
+
+    <!-- camera -->
+    <node pkg="tf" type="static_transform_publisher"
+        name="camera_link_tf"
+        args="0.1 0 0 0 0 0 iris::base_link camera_link 100" />
+
+	
+</launch>

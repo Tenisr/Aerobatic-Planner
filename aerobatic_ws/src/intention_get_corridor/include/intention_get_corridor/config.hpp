@@ -13,17 +13,17 @@ struct Config
     std::string targetTopic;           
     std::string pointCloudPath;       
     std::string corridorPath;           
-    double dilateRadius;               
-    double gridResolution;              
-    std::vector<double> r3Bound;       
-    double localBoxHalfWidth;           
-    std::vector<double> expectedHeight; 
+    double dilateRadius;     //障碍物膨胀半径          
+    double gridResolution;   //栅格地图分辨率     
+    std::vector<double> r3Bound;    //规划空间边界      
+    double localBoxHalfWidth;       //局部规划空间半宽度
+    std::vector<double> expectedHeight;    //期望飞行高度范围
     int outlierThreshold;            
-    bool useLoadPCDFile;                
+    bool useLoadPCDFile;   //加载地图方式，PCD调用或ROS订阅             
     double astar_weight;               
-    int cnt_pos;                        
-    std::vector<double> set_att;        
-    std::vector<double> set_pos;        
+    int cnt_pos;    //预设位置点数量                    
+    std::vector<double> set_att;  //预设航点姿态，四元数表示，因为PoseStamped的姿态用四元数表示
+    std::vector<double> set_pos;  //预设航点位置，三维向量      
 
     inline void
     load(const ros::NodeHandle &nh_priv)
@@ -44,7 +44,7 @@ struct Config
         nh_priv.getParam("SetPos", set_pos);
         nh_priv.getParam("SetAtt", set_att);
         cnt_pos = int(set_pos.size() / 3);
-        if (int(set_pos.size()) != cnt_pos * 3 || int(set_att.size()) != cnt_pos * 4)
+        if (int(set_pos.size()) != cnt_pos * 3 || int(set_att.size()) != cnt_pos * 4)   //航点信息存在问题
         {
             ROS_ERROR("set_pos count is wrong!");
             cnt_pos = 0;

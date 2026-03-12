@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<sdf version='1.5'>
+  <model name='iris_3d_lidar'>
+    <include>
+      <uri>model://iris</uri>
+    </include>
+    <include>
+      <uri>model://Mid360</uri>
+      <pose>0 0 0.06 0 0.5236 0</pose>
+    </include>
+    <joint name="lidar_joint" type="fixed">
+      <child>Mid360::livox_base</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+    <!-- For Stereo Camera Payload -->
+    <include>
+      <uri>model://stereo_camera</uri>
+      <pose>0.1 0 0 0 0 0</pose>
+    </include>
+  </model>
+</sdf>
+<!-- vim: set noet fenc=utf-8 ff=unix sts=0 sw=4 ts=4 : -->
+

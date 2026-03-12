@@ -1,0 +1,9 @@
+<launch>
+
+    <include file="$(find px4)/launch/posix_sitl.launch">
+
+        <arg name="world" value="$(find uav_gazebo)/world/uav_simulation.world" />
+        <arg name="sdf" value="$(find uav_gazebo)/model/iris_lightweight/iris.sdf"/>
+    </include>
+	
+</launch>

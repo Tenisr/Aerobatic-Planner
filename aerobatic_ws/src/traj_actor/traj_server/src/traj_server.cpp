@@ -289,8 +289,31 @@ public:
     {
         if (state == INIT)
             return;
-        if (state == HOVER)
+        if (state == HOVER){
+            
+            _cmd.header.stamp = ros::Time::now();
+            _cmd.header.frame_id = "world";
+            _cmd.trajectory_flag = _traj_flag;
+            _cmd.trajectory_id = _traj_id;
+
+            _cmd.position = hover_position;
+            _cmd.velocity.x = 0.0; _cmd.velocity.y = 0.0; _cmd.velocity.z = 0.0;
+            _cmd.acceleration.x = 0.0; _cmd.acceleration.y = 0.0; _cmd.acceleration.z = 0.0;
+            _cmd.jerk.x = 0.0; _cmd.jerk.y = 0.0; _cmd.jerk.z = 0.0;
+            
+            _cmd.yaw = last_yaw;
+            _cmd.yaw_dot = 0.0;
+            _cmd.yaw_dir.x = last_dir(0);
+            _cmd.yaw_dir.y = last_dir(1);
+            _cmd.yaw_dir.z = last_dir(2);
+            _cmd.yaw_dir_dot.x = 0.0;
+            _cmd.yaw_dir_dot.y = 0.0;
+            _cmd.yaw_dir_dot.z = 0.0;
+
+            _cmd_pub.publish(_cmd);
             return;
+        }
+            
 
         if (state == TRAJ)
         {
@@ -452,6 +475,8 @@ public:
                         _cmd.yaw = 0.0;
                         _cmd.yaw_dot = 0.0;
                     }
+
+                    last_yaw = _cmd.yaw;
                     ori = Eigen::Quaterniond(quat(0), quat(1), quat(2), quat(3));
                     R = ori.normalized().toRotationMatrix();
                     xb = Eigen::Vector3d(R(0, 0), R(1, 0), R(2, 0));
