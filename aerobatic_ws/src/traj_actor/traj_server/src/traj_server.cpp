@@ -205,15 +205,7 @@ public:
 
         // change the order between #2 and #3. zxzxzxzx
 
-        // #2. try to calculate the new state
-        if (state == TRAJ && (((ros::Time::now() /*odom.header.stamp*/ - _start_time).toSec() / slow_speed / mag_coeff) > (_final_time - _start_time).toSec()))
-        {
-            state = HOVER;
-            hover_position = _odom.pose.pose.position;
-            _traj_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
-        }
-
-        // #3. try to publish command
+        // #2. try to publish command
         pubPositionCommand(last_odom_time);
         last_odom_time = ros::Time::now();
     }
@@ -289,31 +281,36 @@ public:
     {
         if (state == INIT)
             return;
-        if (state == HOVER){
-            
+
+        bool traj_finished = false;
+
+        if (state == HOVER)
+        {
             _cmd.header.stamp = ros::Time::now();
             _cmd.header.frame_id = "world";
             _cmd.trajectory_flag = _traj_flag;
             _cmd.trajectory_id = _traj_id;
 
             _cmd.position = hover_position;
-            _cmd.velocity.x = 0.0; _cmd.velocity.y = 0.0; _cmd.velocity.z = 0.0;
-            _cmd.acceleration.x = 0.0; _cmd.acceleration.y = 0.0; _cmd.acceleration.z = 0.0;
-            _cmd.jerk.x = 0.0; _cmd.jerk.y = 0.0; _cmd.jerk.z = 0.0;
-            
+            _cmd.velocity.x = 0.0;
+            _cmd.velocity.y = 0.0;
+            _cmd.velocity.z = 0.0;
+            _cmd.acceleration.x = 0.0;
+            _cmd.acceleration.y = 0.0;
+            _cmd.acceleration.z = 0.0;
+            _cmd.jerk.x = 0.0;
+            _cmd.jerk.y = 0.0;
+            _cmd.jerk.z = 0.0;
+
             _cmd.yaw = last_yaw;
             _cmd.yaw_dot = 0.0;
-            _cmd.yaw_dir.x = last_dir(0);
-            _cmd.yaw_dir.y = last_dir(1);
-            _cmd.yaw_dir.z = last_dir(2);
+            _cmd.yaw_dir.x = cos(last_yaw);
+            _cmd.yaw_dir.y = sin(last_yaw);
+            _cmd.yaw_dir.z = 0.0;
             _cmd.yaw_dir_dot.x = 0.0;
             _cmd.yaw_dir_dot.y = 0.0;
             _cmd.yaw_dir_dot.z = 0.0;
-
-            _cmd_pub.publish(_cmd);
-            return;
         }
-            
 
         if (state == TRAJ)
         {
@@ -322,13 +319,22 @@ public:
             _cmd.trajectory_flag = _traj_flag;
             _cmd.trajectory_id = _traj_id;
 
+            const double traj_total_time = (_final_time - _start_time).toSec();
             double t = max(0.0, (_cmd.header.stamp - _start_time).toSec()); // / mag_coeff;
             // set when to start slow the speed
             if (t > start_slow_time)
             {
                 t = (t - start_slow_time) / slow_speed + start_slow_time;
             }
-            t = min(t, (_final_time - _start_time).toSec());
+            if (t >= traj_total_time - 1.0e-6)
+            {
+                t = traj_total_time;
+                traj_finished = true;
+            }
+            else
+            {
+                t = min(t, traj_total_time);
+            }
 
             double t_f = min(t + time_forward, _time.sum());
             bool use_last_yaw = abs(t_f - _time.sum()) < 1.0e-5 ? true : false;
@@ -343,7 +349,7 @@ public:
                 }
                 else
                 {
-                    double f_idx = idx;
+                    int f_idx = idx;
                     while (t_f > _time[f_idx] && f_idx + 1 < _n_segment)
                     {
                         t_f -= _time[f_idx];
@@ -369,6 +375,7 @@ public:
 
                     int cur_order = _order[idx];
                     int cur_poly_num = cur_order + 1;
+                    int f_poly_num = _order[f_idx] + 1;
 
                     for (int i = 0; i < _order[f_idx] + 1; i++)
                     {
@@ -376,7 +383,7 @@ public:
                         f_pos(1) += _coef[_DIM_y].col(f_idx)(i) * pow(t_f, i);
                         f_pos(2) += _coef[_DIM_z].col(f_idx)(i) * pow(t_f, i);
                         
-                        if (i < (cur_poly_num - 1))
+                        if (i < (f_poly_num - 1))
                         {
                             f_vel(0) += (i + 1) * _coef[_DIM_x].col(f_idx)(i + 1) * pow(t_f, i) / _time[f_idx];
                             f_vel(1) += (i + 1) * _coef[_DIM_y].col(f_idx)(i + 1) * pow(t_f, i) / _time[f_idx];
@@ -425,7 +432,7 @@ public:
                     Eigen::Vector3d pos, vel, acc, jer, omg;
                     Eigen::Vector4d quat;
                     Eigen::Vector3d dir, dir_dot;
-                    double thr, yaw, yaw_dot;
+                    double thr = 0.0, yaw = last_yaw, yaw_dot = 0.0;
 
                     pos(0) = _cmd.position.x;
                     pos(1) = _cmd.position.y;
@@ -455,14 +462,26 @@ public:
                         _cmd.yaw_dir_dot.y = last_dir_dot(1);
                         _cmd.yaw_dir_dot.z = last_dir_dot(2);
                     } else {
-                        _cmd.yaw_dir.x = dir(0);
-                        _cmd.yaw_dir.y = dir(1);
-                        _cmd.yaw_dir.z = dir(2);
-                        _cmd.yaw_dir_dot.x = dir_dot(0);
-                        _cmd.yaw_dir_dot.y = dir_dot(1);
-                        _cmd.yaw_dir_dot.z = dir_dot(2);
-                        last_dir = dir;
-                        last_dir_dot = dir_dot;
+                        if (dir.norm() > 1.0e-3)
+                        {
+                            _cmd.yaw_dir.x = dir(0);
+                            _cmd.yaw_dir.y = dir(1);
+                            _cmd.yaw_dir.z = dir(2);
+                            _cmd.yaw_dir_dot.x = dir_dot(0);
+                            _cmd.yaw_dir_dot.y = dir_dot(1);
+                            _cmd.yaw_dir_dot.z = dir_dot(2);
+                            last_dir = dir;
+                            last_dir_dot = dir_dot;
+                        }
+                        else
+                        {
+                            _cmd.yaw_dir.x = last_dir(0);
+                            _cmd.yaw_dir.y = last_dir(1);
+                            _cmd.yaw_dir.z = last_dir(2);
+                            _cmd.yaw_dir_dot.x = 0.0;
+                            _cmd.yaw_dir_dot.y = 0.0;
+                            _cmd.yaw_dir_dot.z = 0.0;
+                        }
                     }
 
                     if (use_yaw_comp)
@@ -521,10 +540,22 @@ public:
                     break;
                 }
             }
+
+            if (traj_finished)
+            {
+                _cmd.trajectory_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
+            }
         }
 
         _cmd_pub.publish(_cmd);
         _traj_debug_pub.publish(_traj_debug);
+
+        if (traj_finished)
+        {
+            state = HOVER;
+            hover_position = _cmd.position;
+            _traj_flag = quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED;
+        }
 
         _vis_cmd.header = _cmd.header;
         _vis_cmd.pose.position.x = _cmd.position.x;

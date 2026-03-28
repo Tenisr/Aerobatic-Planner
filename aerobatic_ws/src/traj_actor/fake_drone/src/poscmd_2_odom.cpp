@@ -32,45 +32,25 @@ void pubOdom()
 		odom.pose.pose.position.z = _cmd.position.z;
 		Eigen::Quaterniond ori;
 
-		bool use_hopf = true;
-		if (use_hopf)
-		{
-			Eigen::Vector3d force_ = Eigen::Vector3d(_cmd.acceleration.x, _cmd.acceleration.y, _cmd.acceleration.z) + 9.8 * Eigen::Vector3d(0, 0, 1);
-			Eigen::Vector3d t;
-			Eigen::Quaterniond q;
-			double d_yaw = _cmd.yaw;
-
-			if (force_.norm() > 1e-6)
-				t = force_.normalized();
-			else
-				t = Eigen::Vector3d(0, 0, 1);
-
-			if (t(2) > 0)
-			{
-				q = Eigen::Quaterniond(1 + t(2), -t(1), t(0), 0).normalized();
-			}
-			else
-			{
-				q = Eigen::Quaterniond(-t(1), 1 - t(2), 0, t(0)).normalized();
-				d_yaw += 2 * atan2(t(0), t(1));
-			}
-			Eigen::Quaterniond q_ = Eigen::Quaterniond(cos(d_yaw / 2), 0, 0, sin(d_yaw / 2)).normalized();
-			ori = q * q_;
-		}
-		else
-		{
 			Eigen::Vector3d alpha = Eigen::Vector3d(_cmd.acceleration.x, _cmd.acceleration.y, _cmd.acceleration.z) + 9.8 * Eigen::Vector3d(0, 0, 1);
 			Eigen::Vector3d xC(cos(_cmd.yaw), sin(_cmd.yaw), 0);
 			Eigen::Vector3d yC(-sin(_cmd.yaw), cos(_cmd.yaw), 0);
-			Eigen::Vector3d xB = (yC.cross(alpha)).normalized();
-			Eigen::Vector3d yB = (alpha.cross(xB)).normalized();
-			Eigen::Vector3d zB = xB.cross(yB);
+			Eigen::Vector3d zB = alpha.norm() > 1.0e-6 ? alpha.normalized() : Eigen::Vector3d(0, 0, 1);
+			Eigen::Vector3d xB = yC.cross(zB);
+			if (xB.norm() < 1.0e-6)
+			{
+				xB = Eigen::Vector3d(cos(_cmd.yaw), sin(_cmd.yaw), 0.0);
+			}
+			else
+			{
+				xB.normalize();
+			}
+			Eigen::Vector3d yB = zB.cross(xB).normalized();
 			Eigen::Matrix3d R;
 			R.col(0) = xB;
 			R.col(1) = yB;
 			R.col(2) = zB;
 			ori = Eigen::Quaterniond(R);
-		}
 
 		odom.pose.pose.orientation.w = ori.w();
 		odom.pose.pose.orientation.x = ori.x();

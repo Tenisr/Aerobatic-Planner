@@ -25,6 +25,6 @@ sleep 1
 roslaunch px4ctrl run_ctrl.launch &
 sleep 1
 
-roslaunch uav_gazebo algorithm.launch
-sleep 1
+# roslaunch uav_gazebo algorithm.launch
+# sleep 1
 wait

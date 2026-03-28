@@ -101,8 +101,18 @@ quadrotor_msgs::Px4ctrlDebug SO3Control::calculateControl(const Eigen::Vector3d 
   // if (forward(des_vel, des_acc, des_jer, des_dir, des_dir_dot, yaw_, yaw_dot_, thr, quat, omega_))
   {
     orientation_ = Eigen::Quaterniond(quat(0), quat(1), quat(2), quat(3));
+    orientation_.normalize();
 
-    const Eigen::Quaterniond qerr = quat_.inverse() * orientation_;
+    Eigen::Quaterniond qerr = quat_.inverse() * orientation_;
+    qerr.normalize();
+    // Keep quaternion error on the shortest arc to avoid equivalent-sign jumps.
+    if (qerr.w() < 0.0)
+    {
+      qerr.coeffs() *= -1.0;
+    }
+    // Diagnostics for end-of-traj oscillation investigation.
+    // x: qerr.w (quaternion sign / shortest-arc indicator)
+    debug_msg_.exec_err_axisang_x = qerr.w();
     Eigen::Matrix3d trans_R(qerr);
     const Eigen::Vector3d temp_bodyrates = omega_;
     omega_ = trans_R * temp_bodyrates;
@@ -284,43 +294,77 @@ bool SO3Control::forward(const Eigen::Vector3d &vel,
   ddir_xb1 = ddir(1) - z1 * ddir_dot_zb - dir_dot_zb * dz1;
   ddir_xb2 = ddir(2) - z2 * ddir_dot_zb - dir_dot_zb * dz2;
   dtemp = 2 * dir_xb0 * ddir_xb0 + 2 * dir_xb1 * ddir_xb1 + 2 * dir_xb2 * ddir_xb2;
-  if (temp < 1.0e-5){
-    ddir_xb_norm = 0.0;
-  }
-  else
+
+  if (dir_xb_norm > 1.0e-5)
+  {
     ddir_xb_norm = dtemp / (2.0 * dir_xb_norm);
 
-  // sign = xb.cross(dir_xb).dot(zb) > 0 ? 1.0 : -1.0;
-  xb_cross_dir_xb0 = x1 * dir_xb2 - x2 * dir_xb1;
-  xb_cross_dir_xb1 = x2 * dir_xb0 - x0 * dir_xb2;
-  xb_cross_dir_xb2 = x0 * dir_xb1 - x1 * dir_xb0;
+    // sign = xb.cross(dir_xb).dot(zb) > 0 ? 1.0 : -1.0;
+    xb_cross_dir_xb0 = x1 * dir_xb2 - x2 * dir_xb1;
+    xb_cross_dir_xb1 = x2 * dir_xb0 - x0 * dir_xb2;
+    xb_cross_dir_xb2 = x0 * dir_xb1 - x1 * dir_xb0;
 
-  if ((z0 * xb_cross_dir_xb0 + z1 * xb_cross_dir_xb1 + z2 * xb_cross_dir_xb2) > 0)
-    sign = 1.0;
-  else
-    sign = -1.0;
-  // xvdot = xb.dot(dir_xb.normalized());
-  xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+    if ((z0 * xb_cross_dir_xb0 + z1 * xb_cross_dir_xb1 + z2 * xb_cross_dir_xb2) > 0)
+      sign = 1.0;
+    else
+      sign = -1.0;
 
-  if (dir_xb_norm < 1.0e-5) {
-      xb_dot_dir_xb = 1.0; 
-  } else {
-      xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+    xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+    xb_dot_dir_xb = std::max(-1.0, std::min(1.0, xb_dot_dir_xb));
+
+    // yaw = acos(xvdot) * sign;
+    psi = acos(xb_dot_dir_xb) * sign;
+
+    dxb_dot_dir_xb = (dir_xb0 * dx0 + x0 * ddir_xb0 + dir_xb1 * dx1 + x1 * ddir_xb1 + dir_xb2 * dx2 + x2 * ddir_xb2 - xb_dot_dir_xb * ddir_xb_norm) / dir_xb_norm;
+    const double yaw_den = std::sqrt(std::max(1.0e-8, 1.0 - xb_dot_dir_xb * xb_dot_dir_xb));
+    dpsi = -sign * (dxb_dot_dir_xb / yaw_den);
   }
-  xb_dot_dir_xb = std::max(-1.0, std::min(1.0, xb_dot_dir_xb)); 
-
-  // yaw = acos(xvdot) * sign;
-  psi = acos(xb_dot_dir_xb) * sign;
-
-  dxb_dot_dir_xb = (dir_xb0 * dx0 + x0 * ddir_xb0 + dir_xb1 * dx1 + x1 * ddir_xb1 + dir_xb2 * dx2 + x2 * ddir_xb2 - xb_dot_dir_xb * ddir_xb_norm) / dir_xb_norm;
-  // yaw = acos(xvdot) * sign;
-  if (1.0 - xb_dot_dir_xb < 1.0e-5 || xb_dot_dir_xb + 1.0 < 1.0e-5)
+  else
   {
+    ddir_xb_norm = 0.0;
     dpsi = 0.0;
-    // return false;
   }
-  else
-    dpsi = -sign * (dxb_dot_dir_xb / sqrt(1.0 - xb_dot_dir_xb * xb_dot_dir_xb));
+
+  /*
+    dir_xb_norm原处理
+    if (temp < 1.0e-5){
+      ddir_xb_norm = 0.0;
+    }
+    else
+      ddir_xb_norm = dtemp / (2.0 * dir_xb_norm);
+
+    // sign = xb.cross(dir_xb).dot(zb) > 0 ? 1.0 : -1.0;
+    xb_cross_dir_xb0 = x1 * dir_xb2 - x2 * dir_xb1;
+    xb_cross_dir_xb1 = x2 * dir_xb0 - x0 * dir_xb2;
+    xb_cross_dir_xb2 = x0 * dir_xb1 - x1 * dir_xb0;
+
+    if ((z0 * xb_cross_dir_xb0 + z1 * xb_cross_dir_xb1 + z2 * xb_cross_dir_xb2) > 0)
+      sign = 1.0;
+    else
+      sign = -1.0;
+    // xvdot = xb.dot(dir_xb.normalized());
+    xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+
+    if (dir_xb_norm < 1.0e-5) {
+        xb_dot_dir_xb = 1.0; 
+    } else {
+        xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+    }
+    xb_dot_dir_xb = std::max(-1.0, std::min(1.0, xb_dot_dir_xb)); 
+
+    // yaw = acos(xvdot) * sign;
+    psi = acos(xb_dot_dir_xb) * sign;
+
+    dxb_dot_dir_xb = (dir_xb0 * dx0 + x0 * ddir_xb0 + dir_xb1 * dx1 + x1 * ddir_xb1 + dir_xb2 * dx2 + x2 * ddir_xb2 - xb_dot_dir_xb * ddir_xb_norm) / dir_xb_norm;
+    // yaw = acos(xvdot) * sign;
+    if (1.0 - xb_dot_dir_xb < 1.0e-5 || xb_dot_dir_xb + 1.0 < 1.0e-5)
+    {
+      dpsi = 0.0;
+      // return false;
+    }
+    else
+      dpsi = -sign * (dxb_dot_dir_xb / sqrt(1.0 - xb_dot_dir_xb * xb_dot_dir_xb));
+  */  
 
   c_half_psi = cos(0.5 * psi);
   s_half_psi = sin(0.5 * psi);
@@ -333,12 +377,21 @@ bool SO3Control::forward(const Eigen::Vector3d &vel,
   c_psi = cos(psi);
   s_psi = sin(psi);
   omg_den = z2 + 1.0;
+  // omg_den处理
+  if (fabs(omg_den) < 1.0e-3)
+  {
+    omg_den = (omg_den >= 0.0) ? 1.0e-3 : -1.0e-3;
+  }
   omg_term = dz2 / omg_den;
   omg(0) = dz0 * s_psi - dz1 * c_psi -
            (z0 * s_psi - z1 * c_psi) * omg_term;
   omg(1) = dz0 * c_psi + dz1 * s_psi -
            (z0 * c_psi + z1 * s_psi) * omg_term;
   omg(2) = (z1 * dz0 - z0 * dz1) / omg_den + dpsi;
+
+  debug_msg_.exec_err_axisang_y = dir_xb_norm;
+  debug_msg_.exec_err_axisang_z = omg_den;
+  debug_msg_.exec_err_axisang_ang = dpsi;
 
   return true;
 }

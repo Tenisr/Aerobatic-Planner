@@ -210,6 +210,13 @@ void PX4CtrlFSM::process()
 		else
 		{
 			des = get_cmd_des();
+			if (cmd_data.msg.trajectory_flag == quadrotor_msgs::PositionCommand::TRAJECTORY_STATUS_COMPLETED)
+			{
+				// Trajectory server keeps publishing "completed" commands.
+				// Stop chasing the terminal position error and hover at current odom.
+				set_hov_with_odom();
+				des = get_hover_des();
+			}
 		}
 
 		if (takeoff_land_data.triggered && takeoff_land_data.takeoff_land_cmd == quadrotor_msgs::TakeoffLand::LAND)

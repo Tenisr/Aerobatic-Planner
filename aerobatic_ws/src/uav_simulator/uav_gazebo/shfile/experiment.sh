@@ -16,7 +16,7 @@ sleep 1
 roslaunch fast_lio mapping_mid360.launch > /dev/null 2>&1 &
 sleep 1
 
-roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557" &
+roslaunch mavros px4.launch fcu_url:=/dev/ttyACM0:57600 gcs_url:=udp-b://@ &
 sleep 1
 
 /home/tenisr/tenisr/hardware/PX4/QGroundControl_4.3.0.AppImage > /dev/null 2>&1 &

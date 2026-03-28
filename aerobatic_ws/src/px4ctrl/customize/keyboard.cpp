@@ -121,9 +121,15 @@ int main(int argc, char** argv)
                 break;
             case 'e':
                 cmd.yaw -= 0.1;
+                cmd.yaw_dir.x = cos(cmd.yaw);
+                cmd.yaw_dir.y = sin(cmd.yaw);
+                cmd.yaw_dir.z = 0.0;
                 break;
             case 'q':
                 cmd.yaw += 0.1;
+                cmd.yaw_dir.x = cos(cmd.yaw);
+                cmd.yaw_dir.y = sin(cmd.yaw);
+                cmd.yaw_dir.z = 0.0;
                 break;
             case 't':
                 if(mode == MANUAL){

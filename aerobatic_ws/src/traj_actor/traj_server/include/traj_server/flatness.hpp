@@ -227,19 +227,31 @@ namespace flatness
             ddir_xb1 = ddir(1) - z1 * ddir_dot_zb - dir_dot_zb * dz1;
             ddir_xb2 = ddir(2) - z2 * ddir_dot_zb - dir_dot_zb * dz2;
             ddir_xb_sqr_norm = 2 * dir_xb0 * ddir_xb0 + 2 * dir_xb1 * ddir_xb1 + 2 * dir_xb2 * ddir_xb2;
-            ddir_xb_norm = ddir_xb_sqr_norm / (2.0 * dir_xb_norm);
-            xb_cross_dir_xb0 = x1 * dir_xb2 - x2 * dir_xb1;
-            xb_cross_dir_xb1 = x2 * dir_xb0 - x0 * dir_xb2;
-            xb_cross_dir_xb2 = x0 * dir_xb1 - x1 * dir_xb0;
+            if (dir_xb_norm > 1.0e-5)
+            {
+                ddir_xb_norm = ddir_xb_sqr_norm / (2.0 * dir_xb_norm);
+                xb_cross_dir_xb0 = x1 * dir_xb2 - x2 * dir_xb1;
+                xb_cross_dir_xb1 = x2 * dir_xb0 - x0 * dir_xb2;
+                xb_cross_dir_xb2 = x0 * dir_xb1 - x1 * dir_xb0;
 
-            if ((z0 * xb_cross_dir_xb0 + z1 * xb_cross_dir_xb1 + z2 * xb_cross_dir_xb2) > 0)
-                sign = 1.0;
+                if ((z0 * xb_cross_dir_xb0 + z1 * xb_cross_dir_xb1 + z2 * xb_cross_dir_xb2) > 0)
+                    sign = 1.0;
+                else
+                    sign = -1.0;
+
+                xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
+                xb_dot_dir_xb = std::max(-1.0, std::min(1.0, xb_dot_dir_xb));
+                psi = acos(xb_dot_dir_xb) * sign;
+
+                dxb_dot_dir_xb = (dir_xb0 * dx0 + x0 * ddir_xb0 + dir_xb1 * dx1 + x1 * ddir_xb1 + dir_xb2 * dx2 + x2 * ddir_xb2 - xb_dot_dir_xb * ddir_xb_norm) / dir_xb_norm;
+                const double yaw_den = std::sqrt(std::max(1.0e-8, 1.0 - xb_dot_dir_xb * xb_dot_dir_xb));
+                dpsi = -sign * (dxb_dot_dir_xb / yaw_den);
+            }
             else
-                sign = -1.0;
-            xb_dot_dir_xb = (x0 * dir_xb0 + x1 * dir_xb1 + x2 * dir_xb2) / dir_xb_norm;
-            psi = acos(xb_dot_dir_xb) * sign;
-            dxb_dot_dir_xb = (dir_xb0 * dx0 + x0 * ddir_xb0 + dir_xb1 * dx1 + x1 * ddir_xb1 + dir_xb2 * dx2 + x2 * ddir_xb2 - xb_dot_dir_xb * ddir_xb_norm) / dir_xb_norm;
-            dpsi = -sign * (dxb_dot_dir_xb / sqrt(1.0 - xb_dot_dir_xb * xb_dot_dir_xb));
+            {
+                ddir_xb_norm = 0.0;
+                dpsi = 0.0;
+            }
 
             c_half_psi = cos(0.5 * psi);
             s_half_psi = sin(0.5 * psi);
