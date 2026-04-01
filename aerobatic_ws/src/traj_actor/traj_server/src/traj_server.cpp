@@ -475,8 +475,6 @@ public:
                         _cmd.yaw = 0.0;
                         _cmd.yaw_dot = 0.0;
                     }
-
-                    last_yaw = _cmd.yaw;
                     ori = Eigen::Quaterniond(quat(0), quat(1), quat(2), quat(3));
                     R = ori.normalized().toRotationMatrix();
                     xb = Eigen::Vector3d(R(0, 0), R(1, 0), R(2, 0));

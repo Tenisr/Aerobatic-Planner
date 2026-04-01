@@ -22,7 +22,7 @@ sleep 2
 roslaunch mavros px4.launch fcu_url:=/dev/ttyACM0:57600 gcs_url:=udp-b://@ &
 sleep 1
 
-roslaunch px4ctrl run_ctrl.launch odom:="/Odometry" &
+roslaunch px4ctrl run_ctrl.launch odom:="/Odometry" config_file:="$(rospack find px4ctrl)/config/ctrl_param_fpv_real.yaml" &
 sleep 1
 
 # roslaunch uav_gazebo algorithm.launch odom:="/Odometry" &
