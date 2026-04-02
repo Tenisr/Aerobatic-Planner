@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
-	<node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find intention_get_corridor)/config/indoor_rviz.rviz">
-	</node>
+	<arg name="rviz" default="true" />
+	<arg name="visual" default="true" />
+	<arg name="odom" default="/visual_slam/odom" />
+
+	<group if="$(arg rviz)">
+		<node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find intention_get_corridor)/config/indoor_rviz.rviz" />
+	</group>
 
 	<!-- trajectory generation -->
 	<node pkg="intention_get_corridor" type="intention_get_corridor_node" name="intention_get_corridor" output="screen">
@@ -15,8 +20,6 @@
 
 
 	<!-- true drone traj track & control & visualization -->
-	<arg name="odom" default="/visual_slam/odom" />
-
 	<node pkg="traj_server" type="traj_server_node" name="traj_server" output="screen">
 		<remap from="~/joy" to="/nouse"/>
 		<remap from="~/position_command" to="/position_cmd"/>
@@ -25,18 +28,20 @@
 		<param name="traj_server/control_yaw" value="true"/>
 	</node>
 
-	<node pkg="odom_visualization" name="true_odom_vis" type="odom_visualization" output="screen">
-		<remap from="~odom" to="$(arg odom)"/>
-		<param name="color/a" value="0.0"/>
-		<param name="color/r" value="0.0"/>
-		<param name="color/g" value="0.0"/>
-		<param name="color/b" value="0.0"/>
-		<param name="frame_id" value="world"/>
+	<group if="$(arg visual)">
+		<node pkg="odom_visualization" name="true_odom_vis" type="odom_visualization" output="screen">
+			<remap from="~odom" to="$(arg odom)"/>
+			<param name="color/a" value="0.0"/>
+			<param name="color/r" value="0.0"/>
+			<param name="color/g" value="0.0"/>
+			<param name="color/b" value="0.0"/>
+			<param name="frame_id" value="world"/>
 
-		<param name="covariance_scale" value="100.0"/>
-		<param name="robot_scale" value="1.0"/>
-		<param name="tf45" value="true"/>
-	</node>
+			<param name="covariance_scale" value="100.0"/>
+			<param name="robot_scale" value="1.0"/>
+			<param name="tf45" value="true"/>
+		</node>
+	</group>
 
 	<!-- fake drone traj demonstrate & visualization -->
 	<arg name="init_x_" value="-6.52"/>
@@ -62,19 +67,21 @@
         <remap from="~odometry" to="/fake_drone/odom"/>
   </node>
 
-  <node pkg="odom_visualization" name="fake_odom_vis" type="odom_visualization" output="screen">
-		<remap from="~odom" to="/fake_drone/odom"/>
-		<param name="color/a" value="0.0"/>
-		<param name="color/r" value="0.0"/>
-		<param name="color/g" value="0.0"/>
-		<param name="color/b" value="0.0"/>
-		<param name="frame_id" value="world"/>
-		<!-- <param name="mesh_resource" value="package://odom_visualization/meshes/hummingbird.mesh"/> -->
+	<group if="$(arg visual)">
+		<node pkg="odom_visualization" name="fake_odom_vis" type="odom_visualization" output="screen">
+			<remap from="~odom" to="/fake_drone/odom"/>
+			<param name="color/a" value="0.0"/>
+			<param name="color/r" value="0.0"/>
+			<param name="color/g" value="0.0"/>
+			<param name="color/b" value="0.0"/>
+			<param name="frame_id" value="world"/>
+			<!-- <param name="mesh_resource" value="package://odom_visualization/meshes/hummingbird.mesh"/> -->
 
-		<param name="covariance_scale" value="100.0"/>
-		<param name="robot_scale" value="1.0"/>
-		<param name="tf45" value="false"/>
-	</node>
+			<param name="covariance_scale" value="100.0"/>
+			<param name="robot_scale" value="1.0"/>
+			<param name="tf45" value="false"/>
+		</node>
+	</group>
 
 
 </launch>

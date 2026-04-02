@@ -97,7 +97,7 @@ quadrotor_msgs::Px4ctrlDebug SO3Control::calculateControl(const Eigen::Vector3d 
   Eigen::Vector4d quat;
   double thr;
   
-  if (forward(des_vel,( des_acc + acc_error) / mass_, des_jer, des_dir, des_dir_dot, yaw_, yaw_dot_, thr, quat, omega_))
+  if (forward(des_vel,( des_acc + acc_error) / mass_, des_jer, des_dir, des_dir_dot, yaw_, yaw_dot_, thr, quat, omega_))  //质量似乎没法改
   // if (forward(des_vel, des_acc, des_jer, des_dir, des_dir_dot, yaw_, yaw_dot_, thr, quat, omega_))
   {
     orientation_ = Eigen::Quaterniond(quat(0), quat(1), quat(2), quat(3));

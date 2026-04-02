@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+	<!-- FAST-LIO data pipeline: Livox driver + IMU rotation + mapping -->
+	<arg name="rviz" default="false" />
+
+	<include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch" />
+
+	<node pkg="fast_lio" type="imu_rotate.py" name="imu_rotate" output="screen" />
+
+	<include file="$(find fast_lio)/launch/mapping_mid360.launch">
+		<arg name="rviz" value="$(arg rviz)" />
+		<arg name="run_mapping" value="true" />
+	</include>
+</launch>

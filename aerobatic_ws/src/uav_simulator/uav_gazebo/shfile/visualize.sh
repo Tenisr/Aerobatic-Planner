@@ -23,22 +23,6 @@ export ROS_IP="${LOCAL_IP}"
 echo "[INFO] ROS_MASTER_URI=${ROS_MASTER_URI}"
 echo "[INFO] ROS_IP=${ROS_IP}"
 
-roslaunch livox_ros_driver2 msg_MID360.launch > /dev/null 2>&1 &
-sleep 2
-
-rosrun fast_lio imu_rotate.py &
-sleep 1
-
-roslaunch fast_lio mapping_mid360.launch > /dev/null 2>&1 &
-sleep 2
-
-roslaunch mavros px4.launch fcu_url:=/dev/ttyACM0:57600 gcs_url:=udp-b://@ &
-sleep 1
-
-roslaunch px4ctrl run_ctrl.launch odom:="/Odometry" config_file:="$(rospack find px4ctrl)/config/ctrl_param_fpv_real.yaml" &
-sleep 1
-
-roslaunch uav_gazebo algorithm.launch odom:="/Odometry" rviz:=false visual:=false &
-sleep 1
+roslaunch uav_gazebo visualize.launch &
 
 wait

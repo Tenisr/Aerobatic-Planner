@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+	<!-- Visualization-only launch for slave machine -->
+	<arg name="show_planner" default="true" />
+	<arg name="show_fastlio" default="true" />
+
+	<group if="$(arg show_planner)">
+		<node
+			name="planner_rviz"
+			pkg="rviz"
+			type="rviz"
+			output="screen"
+			args="-d $(find intention_get_corridor)/config/indoor_rviz.rviz" />
+	</group>
+
+	<group if="$(arg show_fastlio)">
+		<node
+			name="fastlio_rviz"
+			pkg="rviz"
+			type="rviz"
+			output="screen"
+			args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
+	</group>
+</launch>
