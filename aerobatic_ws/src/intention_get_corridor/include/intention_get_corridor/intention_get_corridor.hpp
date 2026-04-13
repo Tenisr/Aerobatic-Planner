@@ -67,8 +67,8 @@ public:
           glbMapPtr(std::make_shared<GlobalMap>(config)),
           visualizer(config, nh), astarfinder(nh, config)
     {
-        mapPub = nh.advertise<sensor_msgs::PointCloud2>(config.infmapTopic, 1000);
-        visMapPub = nh.advertise<sensor_msgs::PointCloud2>(config.infmapTopic + "_vis", 1000);
+        mapPub = nh.advertise<sensor_msgs::PointCloud2>(config.infmapTopic, 1000, true);
+        visMapPub = nh.advertise<sensor_msgs::PointCloud2>(config.infmapTopic + "_vis", 1000, true);
         corridorPub = nh.advertise<quadrotor_msgs::CorridorList>("corridor_list", 1000);
         keyPosPub = nh.advertise<geometry_msgs::PoseArray>("key_pos", 1000);
 
