@@ -96,6 +96,7 @@ public:
     Eigen::Vector3d delta_p; // 位置增量
     Eigen::Vector3d delta_v; // 速度增量
     Eigen::Matrix3d delta_R; // 姿态增量
+    Eigen::Vector3d last_gyr; // 最近一次去偏后的角速度
     Eigen::Vector3d bias_a;  // 加速度偏置
     Eigen::Vector3d bias_g;  // 角速度偏置
     double delta_t;          // 时间增量
@@ -108,12 +109,14 @@ public:
         delta_p.setZero();
         delta_v.setZero();
         delta_R.setIdentity();
+        last_gyr.setZero();
         delta_t = 0.0;
     }
 
     void integrate(const Eigen::Vector3d &acc, const Eigen::Vector3d &gyr, double dt) {
         Eigen::Vector3d acc_unbiased = acc - bias_a;
         Eigen::Vector3d gyr_unbiased = gyr - bias_g;
+        last_gyr = gyr_unbiased;
 
         // 更新姿态
         Eigen::Matrix3d dR = Exp(gyr_unbiased * dt); // 使用SO(3)指数映射
@@ -185,6 +188,14 @@ void publishHighFrequencyPose(
         odom.pose.pose.orientation.y = q.y();
         odom.pose.pose.orientation.z = q.z();
         odom.pose.pose.orientation.w = q.w();
+
+        Eigen::Vector3d vel_body = rot.transpose() * vel;
+        odom.twist.twist.linear.x = vel_body.x();
+        odom.twist.twist.linear.y = vel_body.y();
+        odom.twist.twist.linear.z = vel_body.z();
+        odom.twist.twist.angular.x = imu_preintegration.last_gyr.x();
+        odom.twist.twist.angular.y = imu_preintegration.last_gyr.y();
+        odom.twist.twist.angular.z = imu_preintegration.last_gyr.z();
 
         pubOdom.publish(odom);
 
@@ -719,6 +730,16 @@ void publish_odometry(const ros::Publisher & pubOdomAftMapped)
     odomAftMapped.child_frame_id = "body";
     odomAftMapped.header.stamp = ros::Time().fromSec(lidar_end_time);// ros::Time().fromSec(lidar_end_time);
     set_posestamp(odomAftMapped.pose);
+
+    Eigen::Vector3d vel_world(state_point.vel(0), state_point.vel(1), state_point.vel(2));
+    Eigen::Vector3d vel_body = state_point.rot.toRotationMatrix().transpose() * vel_world;
+    odomAftMapped.twist.twist.linear.x = vel_body.x();
+    odomAftMapped.twist.twist.linear.y = vel_body.y();
+    odomAftMapped.twist.twist.linear.z = vel_body.z();
+    odomAftMapped.twist.twist.angular.x = imu_preintegration.last_gyr.x();
+    odomAftMapped.twist.twist.angular.y = imu_preintegration.last_gyr.y();
+    odomAftMapped.twist.twist.angular.z = imu_preintegration.last_gyr.z();
+
     pubOdomAftMapped.publish(odomAftMapped);
     auto P = kf.get_P();
     for (int i = 0; i < 6; i ++)
