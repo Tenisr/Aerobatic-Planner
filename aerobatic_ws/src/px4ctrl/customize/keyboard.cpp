@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     quadrotor_msgs::PositionCommand cmd;
     cmd.position.x = 0.0;
     cmd.position.y = 0.0;
-    cmd.position.z = 1.0;
+    cmd.position.z = 0.6;
     cmd.yaw = 0.0;
 
     geometry_msgs::PointStamped trigger;

@@ -29,7 +29,7 @@ sleep 2
 rosrun fast_lio imu_rotate.py &
 sleep 1
 
-roslaunch fast_lio mapping_mid360.launch > /dev/null 2>&1 &
+roslaunch fast_lio mapping_mid360.launch rviz:=false > /dev/null 2>&1 &
 sleep 2
 
 roslaunch mavros px4.launch fcu_url:=/dev/ttyACM0:57600 gcs_url:=udp-b://@ &
