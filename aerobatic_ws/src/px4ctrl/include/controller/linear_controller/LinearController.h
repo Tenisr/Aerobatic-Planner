@@ -11,6 +11,7 @@
 
 #include "input.h"
 #include <Eigen/Dense>
+#include "PX4CtrlParam.h"
 
 struct Desired_State_t
 {
@@ -36,21 +37,6 @@ struct Desired_State_t
 		  dir_dot(Eigen::Vector3d::Zero()),
 		  yaw(uav_utils::get_yaw_from_quaternion(odom.q)),
 		  yaw_rate(0){};
-};
-
-struct Controller_Output_t
-{
-
-	// Orientation of the body frame with respect to the world frame
-	Eigen::Quaterniond q;
-
-	// Body rates in body frame
-	Eigen::Vector3d bodyrates; // [rad/s]
-
-	// Collective mass normalized thrust
-	double thrust;
-
-	//Eigen::Vector3d des_v_real;
 };
 
 

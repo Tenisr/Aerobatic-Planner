@@ -5,6 +5,7 @@
 #include<queue>
 #include <quadrotor_msgs/Px4ctrlDebug.h>
 #include "input.h"
+#include "PX4CtrlParam.h"
 
 class SO3Control
 {
@@ -25,7 +26,8 @@ public:
                         const Eigen::Vector3d &des_dir,
                         const Eigen::Vector3d &des_dir_dot,
                         const double des_yaw, const double des_yaw_dot,
-                        const Imu_Data_t &imu,const Odom_Data_t &odom);
+                        const Imu_Data_t &imu,const Odom_Data_t &odom,
+                        Controller_Output_t &u);
 
   bool forward(const Eigen::Vector3d &vel,
                const Eigen::Vector3d &acc,

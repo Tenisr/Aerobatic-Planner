@@ -1,6 +1,7 @@
 InfMapTopic: "/mock_map"
 
-OdomTopic: "/visual_slam/odom"
+OdomTopic: "Odometry"  # real
+# OdomTopic: "/visual_slam/odom" # simu
 
 TargetTopic: "/goal"
 

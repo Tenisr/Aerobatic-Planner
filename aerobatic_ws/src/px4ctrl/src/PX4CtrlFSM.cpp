@@ -279,7 +279,7 @@ void PX4CtrlFSM::process()
 			static bool print_once_flag = true;
 			if (print_once_flag)
 			{
-				ROS_INFO("\033[32m[px4ctrl] Wait for abount 10s to let the drone arm.\033[32m");
+				ROS_INFO("\033[32m[px4ctrl] Wait for abount 10s to let the drone disarm.\033[32m");
 				print_once_flag = false;
 			}
 
@@ -328,7 +328,7 @@ void PX4CtrlFSM::process()
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}else{	//SO3Control
-		debug_msg = controller_.calculateControl(des.p, des.v, des.a, des.j, des.dir, des.dir_dot, des.yaw, des.yaw_rate, imu_data, odom_data);
+		debug_msg = controller_.calculateControl(des.p, des.v, des.a, des.j, des.dir, des.dir_dot, des.yaw, des.yaw_rate, imu_data, odom_data, u);
 		debug_msg.header.stamp = now_time;
 		debug_pub.publish(debug_msg);
 	}
@@ -343,7 +343,7 @@ void PX4CtrlFSM::process()
 		publish_attitude_ctrl(u, now_time);
 	}else{	//SE3Publish
 
-		publish_SE3_ctrl(controller_, now_time);
+		publish_SE3_ctrl(controller_, now_time, u);
 	}
 
 	// STEP5: Detect if the drone has landed
@@ -605,16 +605,29 @@ void PX4CtrlFSM::publish_attitude_ctrl(const Controller_Output_t &u, const ros::
 	ctrl_FCU_pub.publish(msg);
 }
 
-void PX4CtrlFSM::publish_SE3_ctrl(SO3Control& controller_, const ros::Time &stamp){
+void PX4CtrlFSM::publish_SE3_ctrl(SO3Control& controller_, const ros::Time &stamp, const Controller_Output_t &u){
 
-  	const Eigen::Vector3d&    force       = controller_.getComputedForce();
-  	const Eigen::Quaterniond& orientation = controller_.getComputedOrientation();
-  	const Eigen::Vector3d&    omega       = controller_.getComputedOmega();
-  	const double              yaw         = controller_.getComputedYaw();
-  	const double              yaw_dot     = controller_.getComputedYawDot();
+  	// const Eigen::Vector3d&    force       = controller_.getComputedForce();
+  	// const Eigen::Quaterniond& orientation = controller_.getComputedOrientation();
+  	// const Eigen::Vector3d&    omega       = controller_.getComputedOmega();
+  	// const double              yaw         = controller_.getComputedYaw();
+  	// const double              yaw_dot     = controller_.getComputedYawDot();
 
-	Eigen::Vector3d target_acc = force / param.mass;
-	double mapped_thrust = controller_.computeDesiredCollectiveThrustSignal(target_acc);
+	// Eigen::Vector3d target_acc = force / param.mass;
+	// double mapped_thrust = controller_.computeDesiredCollectiveThrustSignal(target_acc);
+
+	// mavros_msgs::AttitudeTarget msg;
+
+	// msg.header.stamp = stamp;
+	// msg.header.frame_id = std::string("FCU");
+
+	// msg.type_mask = mavros_msgs::AttitudeTarget::IGNORE_ATTITUDE;
+
+	// msg.body_rate.x = omega.x();
+	// msg.body_rate.y = omega.y();
+	// msg.body_rate.z = omega.z();
+
+	// msg.thrust = mapped_thrust;
 
 	mavros_msgs::AttitudeTarget msg;
 
@@ -623,20 +636,11 @@ void PX4CtrlFSM::publish_SE3_ctrl(SO3Control& controller_, const ros::Time &stam
 
 	msg.type_mask = mavros_msgs::AttitudeTarget::IGNORE_ATTITUDE;
 
-	// msg.type_mask = mavros_msgs::AttitudeTarget::IGNORE_ROLL_RATE |
-	// 			mavros_msgs::AttitudeTarget::IGNORE_PITCH_RATE |
-	// 			mavros_msgs::AttitudeTarget::IGNORE_YAW_RATE;
+	msg.body_rate.x = u.bodyrates.x();
+	msg.body_rate.y = u.bodyrates.y();
+	msg.body_rate.z = u.bodyrates.z();
 
-	// msg.orientation.x = orientation.x();
-	// msg.orientation.y = orientation.y();
-	// msg.orientation.z = orientation.z();
-	// msg.orientation.w = orientation.w();
-
-	msg.body_rate.x = omega.x();
-	msg.body_rate.y = omega.y();
-	msg.body_rate.z = omega.z();
-
-	msg.thrust = mapped_thrust;
+	msg.thrust = u.thrust;
 
 	ctrl_FCU_pub.publish(msg);
 }

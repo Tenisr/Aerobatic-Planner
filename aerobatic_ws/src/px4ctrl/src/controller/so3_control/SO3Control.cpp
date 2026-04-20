@@ -46,7 +46,8 @@ quadrotor_msgs::Px4ctrlDebug SO3Control::calculateControl(const Eigen::Vector3d 
                                   const Eigen::Vector3d &des_dir,
                                   const Eigen::Vector3d &des_dir_dot,
                                   const double des_yaw, const double des_yaw_dot,
-                                  const Imu_Data_t &imu,const Odom_Data_t &odom)
+                                  const Imu_Data_t &imu,const Odom_Data_t &odom,
+                                  Controller_Output_t &u)
 {
   Eigen::Vector3d acc_error;
 
@@ -139,6 +140,13 @@ quadrotor_msgs::Px4ctrlDebug SO3Control::calculateControl(const Eigen::Vector3d 
     omega_.z() = old_omega_.z();
   }
 
+  Eigen::Vector3d target_acc = force_ / param_.mass;
+  double mapped_thrust = computeDesiredCollectiveThrustSignal(target_acc);
+
+  u.q = orientation_;
+  u.bodyrates = omega_;
+  u.thrust = mapped_thrust;
+
   debug_msg_.des_v_x = des_vel(0);
   debug_msg_.des_v_y = des_vel(1);
   debug_msg_.des_v_z = des_vel(2);
@@ -155,9 +163,6 @@ quadrotor_msgs::Px4ctrlDebug SO3Control::calculateControl(const Eigen::Vector3d 
   debug_msg_.fb_rate_x = omega_.x();
   debug_msg_.fb_rate_y = omega_.y();
   debug_msg_.fb_rate_z = omega_.z();
-
-  Eigen::Vector3d target_acc = force_ / param_.mass;
-	double mapped_thrust = computeDesiredCollectiveThrustSignal(target_acc);
 
   debug_msg_.des_thr = mapped_thrust;
 

@@ -2,6 +2,7 @@
 #define __PX4CTRLPARAM_H
 
 #include <ros/ros.h>
+#include <Eigen/Dense>
 
 class Parameter_t
 {
@@ -95,5 +96,21 @@ private:
 		}
 	};
 };
+
+struct Controller_Output_t
+{
+
+	// Orientation of the body frame with respect to the world frame
+	Eigen::Quaterniond q;
+
+	// Body rates in body frame
+	Eigen::Vector3d bodyrates; // [rad/s]
+
+	// Collective mass normalized thrust
+	double thrust;
+
+	//Eigen::Vector3d des_v_real;
+};
+
 
 #endif
