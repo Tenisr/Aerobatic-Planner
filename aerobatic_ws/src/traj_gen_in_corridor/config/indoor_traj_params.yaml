@@ -1,8 +1,8 @@
 ## params for trajectory generation
 TargetTopic: "/goal"
 TriggerTopic: "/trigger"
-# OdomTopic: "Odometry"       # real
-OdomTopic: "/visual_slam/odom"  # simu
+OdomTopic: "Odometry"       # real
+# OdomTopic: "/visual_slam/odom"  # simu
 
 TrajTopic: "/trajectory_generator_node/trajectory"
 VisTrajTopic: "/trajectory_generator_node/forvis_trajectory"

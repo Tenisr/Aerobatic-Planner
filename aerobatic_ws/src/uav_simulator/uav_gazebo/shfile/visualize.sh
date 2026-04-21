@@ -23,6 +23,6 @@ export ROS_IP="${LOCAL_IP}"
 echo "[INFO] ROS_MASTER_URI=${ROS_MASTER_URI}"
 echo "[INFO] ROS_IP=${ROS_IP}"
 
-roslaunch uav_gazebo visualize.launch &
+roslaunch uav_gazebo visualize.launch show_fastlio:=false &
 
 wait

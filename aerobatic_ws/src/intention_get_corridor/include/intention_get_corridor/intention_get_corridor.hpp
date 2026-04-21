@@ -420,8 +420,8 @@ public:
         for (int i = 0; i < key_pos.cols(); i++)
         {
             pointseq.pos[i * 3 + 0] = key_pos(0, i);
-            pointseq.pos[i * 3 + 1] = key_pos(2, i);
-            pointseq.pos[i * 3 + 2] = key_pos(1, i);
+            pointseq.pos[i * 3 + 1] = key_pos(1, i);
+            pointseq.pos[i * 3 + 2] = key_pos(2, i);
             pointseq.vel[i * 3 + 0] = keyPosArray.poses[i].orientation.x;
             pointseq.vel[i * 3 + 1] = keyPosArray.poses[i].orientation.y;
             pointseq.vel[i * 3 + 2] = keyPosArray.poses[i].orientation.z;
