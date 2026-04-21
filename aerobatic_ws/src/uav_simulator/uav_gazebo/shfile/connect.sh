@@ -7,7 +7,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 	exit 1
 fi
 
-MASTER_IP=${MASTER_IP:-192.168.0.107}
+MASTER_IP=${MASTER_IP:-192.168.0.200}
 ROS_PORT=${ROS_PORT:-11311}
 LOCAL_IP=${LOCAL_IP:-$(ip route get "${MASTER_IP}" 2>/dev/null | awk '/src/ { for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }')}
 LOCAL_IP=${LOCAL_IP:-$(hostname -I | awk '{print $1}')}

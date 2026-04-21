@@ -1,13 +1,14 @@
 InfMapTopic: "/mock_map"
 
-OdomTopic: "Odometry"  # real
-# OdomTopic: "/visual_slam/odom" # simu
+# OdomTopic: "Odometry"  # real
+OdomTopic: "/visual_slam/odom" # simu
 
 TargetTopic: "/goal"
 
 PointCloudUsePCD: true
 
-PointCloudPath: "/../uav_simulator/uav_gazebo/map/gazebo.pcd"
+# PointCloudPath: "/../uav_simulator/uav_gazebo/map/simu.pcd"
+PointCloudPath: "/../uav_simulator/uav_gazebo/map/real.pcd"
 
 OutlierThreshold: 1
 
@@ -19,7 +20,8 @@ R3Bound:
   [-9.0, 9.0, -6.5, 6.5, 0.0, 2.0]
   # [xmin, xmax, ymin, ymax, zmin, zmax]
 
-LocalBoxHalfWidth: 3.0
+LocalBoxHalfWidth: 1.2
+# LocalBoxHalfWidth: 3.0
 
 ExpectedHeight: [0.4, 2.0]
 
@@ -30,6 +32,8 @@ Astar_weight: 0.0
 # Aero Test
 SetPos: 
     [
+        # --- simulation ---
+
         #平飞测试
         # 0.000, 3.700, 0.700,
         # 1.400, 5.700, 0.800,
@@ -40,8 +44,8 @@ SetPos:
         # 8.400, -2.700, 0.800,
 
         #直线测试
-        0.000, 1.400, 1.000,
-        5.000, -0.600, 0.800,
+        # 0.000, 1.400, 1.000,
+        # 5.000, -0.600, 0.800,
 
         #穿梭测试   飞行高度 2m   参数较激进
         # 0.880, 0.800, 0.800,
@@ -58,9 +62,24 @@ SetPos:
         # -4.200, 1.500,  2.500,
         # -1.600, 2.400,  2.000,
         # 3.000,  1.000,  2.000,
+
+
+        # --- reality ---
+
+        #直线测试
+        # 0.000, 1.400, 1.000,
+        # 5.000, -0.600, 0.800,
+
+        #弧形曲线
+        1.400,  -1.200, 1.000,
+        3.240, -3.655, 1.200,
+        5.655, 0.618, 0.800,
+        # 5.265, 0.390, 1.200,
     ]
 
 SetAtt: 
+        # --- simulation ---
+
     [ # x, y, z, flag,
         #平飞测试
         # 0,   0,   1,    0,
@@ -72,8 +91,8 @@ SetAtt:
         # 0,   0,   1,    0,
 
         #直线测试
-        0,   0,   1,    0,
-        0,   0,   1,    0,
+        # 0,   0,   1,    0,
+        # 0,   0,   1,    0,
 
         #穿梭测试
         # 0,   0,   1,    0,
@@ -90,6 +109,18 @@ SetAtt:
         # 0,   0,   -1,   1,
         # 0,   -1,   0,    0,
         # 0,   0,   1,    0
+
+        # --- reality ---
+
+        #直线测试
+        # 0,   0,   1,    0,
+        # 0,   0,   1,    0,
+
+        #弧形曲线
+        0,   0,   1,    0,
+        0,   0,   1,    0,
+        0,   0,   1,    0,
+        # 0,   0,   1,    0,
     ]
 
 

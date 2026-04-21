@@ -1,13 +1,13 @@
 ## params for trajectory generation
 TargetTopic: "/goal"
 TriggerTopic: "/trigger"
-OdomTopic: "Odometry"       # real
-# OdomTopic: "/visual_slam/odom"  # simu
+# OdomTopic: "Odometry"       # real
+OdomTopic: "/visual_slam/odom"  # simu
 
 TrajTopic: "/trajectory_generator_node/trajectory"
 VisTrajTopic: "/trajectory_generator_node/forvis_trajectory"
-MaxOmgRate: 5.0   #最大角速度   #保守参数 5.0 激进参数 7.0
-MaxVelRate: 6.0   #最大线速度  #保守参数 6.0 激进参数 10.0
+MaxOmgRate: 7.0   #最大角速度   #保守参数 5.0 激进参数 7.0
+MaxVelRate: 10.0   #最大线速度  #保守参数 6.0 激进参数 10.0
 MaxTau: 20.0      #最大推力
 MinTau: 7.0       #最小推力
 MaxRange: 0.5     #最大容差范围

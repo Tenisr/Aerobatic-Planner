@@ -7,7 +7,7 @@ gra         : 9.81
 pose_solver : 1     # 0:From ZhepeiWang (drag & less singular) 1:From ZhepeiWang, 2:From rotor-drag    
 ctrl_freq_max   : 100.0
 use_bodyrate_ctrl: false
-use_SE3_control: false
+use_SE3_control: true
 max_manual_vel: 1.0
 # max_angle: 30  # Attitude angle limit in degree. A negative value means no limit.
 max_angle: -1  
@@ -34,38 +34,17 @@ thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(
     K2: 1.6942 # Needs precise calibration!
     K3: 0.6786 # Needs precise calibration! K3 equals THR_MDL_FAC in https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html.
     # approximate thrust mapping parameters
-    hover_percentage: 0.3  # Thrust percentage in Stabilize/Arco mode #simulation 0.453 reality:0.314
+    hover_percentage: 0.314  # Thrust percentage in Stabilize/Arco mode #simulation 0.453 reality:0.314
 
 # --- Linear --- 
-gain:
-    # Cascade PID controller. Recommend to read the code.
-    Kp0: 1.5    
-    Kp1: 1.5    
-    Kp2: 2.5
-    Kv0: 1.5
-    Kv1: 1.5
-    Kv2: 1.5
-    # ↓↓↓ No use now --
-    Kvi0: 0.0
-    Kvi1: 0.0
-    Kvi2: 0.0
-    Kvd0: 0.0
-    Kvd1: 0.0
-    Kvd2: 0.0
-    # ↓↓↓ Only used in rate control mode.
-    KAngR: 20.0
-    KAngP: 20.0
-    KAngY: 20.0
-
-# --- SE3 --- 
 # gain:
 #     # Cascade PID controller. Recommend to read the code.
-#     Kp0: 1.27 #3.2 #1.27       
-#     Kp1: 1.27 #3.2 #1.27       
-#     Kp2: 1.2 #1.2             
-#     Kv0: 0.84 #0.1 #0.84       
-#     Kv1: 0.84 #0.1 #0.84       
-#     Kv2: 0.6 #0.6            
+#     Kp0: 1.5    
+#     Kp1: 1.5    
+#     Kp2: 2.5
+#     Kv0: 1.5
+#     Kv1: 1.5
+#     Kv2: 1.5
 #     # ↓↓↓ No use now --
 #     Kvi0: 0.0
 #     Kvi1: 0.0
@@ -73,10 +52,31 @@ gain:
 #     Kvd0: 0.0
 #     Kvd1: 0.0
 #     Kvd2: 0.0
-#     # ↓↓↓ Only used in SO3 Control
-#     KAngR: 1.5     #1.5
-#     KAngP: 1.5     #1.5
-#     KAngY: 1     #1
+#     # ↓↓↓ Only used in rate control mode.
+#     KAngR: 20.0
+#     KAngP: 20.0
+#     KAngY: 20.0
+
+# --- SE3 --- 
+gain:
+    # Cascade PID controller. Recommend to read the code.
+    Kp0: 2.4 #3.2 #1.27       
+    Kp1: 2.4 #3.2 #1.27       
+    Kp2: 1.2 #1.2             
+    Kv0: 1.04 #0.1 #0.84       
+    Kv1: 1.04 #0.1 #0.84       
+    Kv2: 0.6 #0.6            
+    # ↓↓↓ No use now --
+    Kvi0: 0.0
+    Kvi1: 0.0
+    Kvi2: 0.0
+    Kvd0: 0.0
+    Kvd1: 0.0
+    Kvd2: 0.0
+    # ↓↓↓ Only used in SO3 Control
+    KAngR: 3     #1.5
+    KAngP: 3     #1.5
+    KAngY: 2     #1
 
 rotor_drag:  
     x: 0.0  # The reduced acceleration on each axis caused by rotor drag. Unit:(m*s^-2)/(m*s^-1).
