@@ -13,7 +13,7 @@ trap cleanup SIGINT SIGTERM
 # ROS master/slave network settings (host side)
 # Example:
 #   MASTER_IP=192.168.0.107 ./experiment.sh
-MASTER_IP=${MASTER_IP:-192.168.0.200}
+MASTER_IP=${MASTER_IP:-192.168.0.108}
 ROS_PORT=${ROS_PORT:-11311}
 LOCAL_IP=${LOCAL_IP:-$(ip route get "${MASTER_IP}" 2>/dev/null | awk '/src/ { for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }')}
 

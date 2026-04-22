@@ -25,6 +25,6 @@ sleep 1
 roslaunch px4ctrl run_ctrl.launch config_file:="$(rospack find px4ctrl)/config/ctrl_param_fpv_simu.yaml" &
 sleep 1
 
-# roslaunch uav_gazebo algorithm.launch
-# sleep 1
+roslaunch uav_gazebo algorithm.launch
+sleep 1
 wait

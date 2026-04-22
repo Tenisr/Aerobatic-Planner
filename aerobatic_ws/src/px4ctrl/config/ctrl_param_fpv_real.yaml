@@ -60,11 +60,11 @@ thrust_model: # The model that maps thrust signal u(0~1) to real thrust force F(
 # --- SE3 --- 
 gain:
     # Cascade PID controller. Recommend to read the code.
-    Kp0: 4.2 #3.2 #1.27       
-    Kp1: 4.2 #3.2 #1.27       
-    Kp2: 4.6 #1.2             
-    Kv0: 2.24 #0.1 #0.84       
-    Kv1: 1.64 #0.1 #0.84       
+    Kp0: 4.8 #3.2 #1.27       
+    Kp1: 4.8 #3.2 #1.27       
+    Kp2: 5.6 #1.2             
+    Kv0: 2.64 #0.1 #0.84       
+    Kv1: 1.84 #0.1 #0.84       
     Kv2: 2.2 #0.6            
     # ↓↓↓ No use now --
     Kvi0: 0.0
@@ -74,9 +74,9 @@ gain:
     Kvd1: 0.0
     Kvd2: 0.0
     # ↓↓↓ Only used in SO3 Control
-    KAngR: 6     #1.5
-    KAngP: 6     #1.5
-    KAngY: 4.5     #1
+    KAngR: 6.4     #1.5
+    KAngP: 6.4     #1.5
+    KAngY: 4.8     #1
 
 rotor_drag:  
     x: 0.0  # The reduced acceleration on each axis caused by rotor drag. Unit:(m*s^-2)/(m*s^-1).
